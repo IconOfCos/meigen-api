@@ -29,7 +29,7 @@
 ## S02_M001_Data_Core スプリント
 
 ### 計画済みタスク
-- **T01_S02_Quote_Data_Schema**: not_started (Low, 3-4h)
+- **TX01_S02_Quote_Data_Schema**: completed (Low, 3-4h) - 完了: 2025-06-07 07:55
 - **TX02_S02_Data_Access_Layer**: completed (Medium, 4-5h)
 - **TX03_S02_Quote_Service_Core**: completed (Medium, 5-6h)
 - **T04_S02_Search_Filter_Features**: not_started (Medium, 4-5h)
