@@ -1,0 +1,89 @@
+{
+  "project": {
+    "name": "Japanese Quotes API",
+    "codename": "my-app",
+    "version": "1.0.0",
+    "description": "Honoフレームワークを使用した日本語名言提供WebAPI",
+    "type": "api",
+    "language": "typescript",
+    "framework": "hono"
+  },
+  "repository": {
+    "type": "git",
+    "remote": null,
+    "branch": "master"
+  },
+  "team": {
+    "lead": null,
+    "members": [],
+    "stakeholders": []
+  },
+  "methodology": {
+    "development": "TDD",
+    "cycle": "Red-Green-Refactor",
+    "testFramework": "vitest",
+    "coverageTarget": 80
+  },
+  "architecture": {
+    "pattern": "REST API",
+    "framework": "Hono",
+    "runtime": "Node.js",
+    "database": "in-memory",
+    "testing": "Vitest",
+    "linting": "Biome"
+  },
+  "milestones": {
+    "current": "M001_API_FOUNDATION",
+    "completed": [],
+    "upcoming": []
+  },
+  "status": {
+    "phase": "development",
+    "health": "green",
+    "lastUpdated": "2025-01-07T00:00:00Z"
+  },
+  "requirements": {
+    "core": [
+      "GET /quotes - 全名言取得（ページネーション対応）",
+      "GET /quotes/random - ランダム名言取得",
+      "GET /quotes/:id - ID指定名言取得",
+      "GET /quotes/category/:category - カテゴリ別名言取得",
+      "GET /quotes/author/:author - 作者別名言取得"
+    ],
+    "technical": [
+      "TypeScript型安全性",
+      "エラーハンドリング",
+      "CORS対応",
+      "バリデーション",
+      "テストカバレッジ80%以上"
+    ],
+    "business": [
+      "日本語名言10個以上",
+      "5つのカテゴリ分類",
+      "レスポンス時間100ms以下",
+      "統一されたJSONレスポンス形式"
+    ]
+  },
+  "scripts": {
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "test": "npm run test",
+    "lint": "npm run lint",
+    "format": "npm run format"
+  },
+  "deployment": {
+    "target": "node",
+    "port": 3000,
+    "environment": "development"
+  },
+  "documentation": {
+    "architecture": ".simone/01_PROJECT_DOCS/ARCHITECTURE.md",
+    "requirements": ".simone/02_REQUIREMENTS/M001_API_FOUNDATION/README.md",
+    "userRequirements": "要件.md"
+  },
+  "simone": {
+    "version": "1.0",
+    "initialized": "2025-01-07T00:00:00Z",
+    "framework": "active"
+  }
+}
