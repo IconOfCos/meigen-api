@@ -1,8 +1,8 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import quotes from "./routes/index.js";
 
 // モジュールのインポート - 実装時に有効化
-// import * as routes from "./routes/index.js";
 // import * as services from "./services/index.js";
 // import * as models from "./models/index.js";
 // import * as utils from "./utils/index.js";
@@ -16,8 +16,8 @@ app.get("/", (c) => {
 	return c.text("Hello Hono!");
 });
 
-// 将来のAPI実装時にルートを追加予定:
-// app.route("/quotes", routes.quotesRouter);
+// APIルートをマウント
+app.route("/quotes", quotes);
 
 serve(
 	{
