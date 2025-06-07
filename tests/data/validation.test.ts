@@ -30,39 +30,45 @@ describe('データバリデーション', () => {
     it('有効なQuoteオブジェクトをバリデーション成功すること', () => {
       const result = validateQuote(validQuote);
       
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-      expect(result.data).toEqual(validQuote);
+      expect(result).toEqual(validQuote);
     });
 
     it('nullまたはundefinedでバリデーション失敗すること', () => {
-      const resultNull = validateQuote(null);
-      const resultUndefined = validateQuote(undefined);
-
-      expect(resultNull.isValid).toBe(false);
-      expect(resultNull.errors).toHaveLength(1);
-      expect(resultNull.errors[0].field).toBe('quote');
-
-      expect(resultUndefined.isValid).toBe(false);
-      expect(resultUndefined.errors).toHaveLength(1);
+      expect(() => validateQuote(null)).toThrow(ValidationError);
+      expect(() => validateQuote(undefined)).toThrow(ValidationError);
+      
+      try {
+        validateQuote(null);
+      } catch (error) {
+        expect(error).toBeInstanceOf(ValidationError);
+        expect((error as ValidationError).field).toBe('quote');
+      }
     });
 
     it('オブジェクト型でない場合バリデーション失敗すること', () => {
-      const result = validateQuote('not an object');
+      expect(() => validateQuote('not an object')).toThrow(ValidationError);
       
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].field).toBe('quote');
-      expect(result.errors[0].reason).toBe('Quote must be an object');
+      try {
+        validateQuote('not an object');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ValidationError);
+        expect((error as ValidationError).field).toBe('quote');
+        expect((error as ValidationError).reason).toBe('Quote must be an object');
+      }
     });
 
     describe('IDバリデーション', () => {
       it('IDが数値でない場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, id: 'not a number' };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'id')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
+        
+        try {
+          validateQuote(invalidQuote);
+        } catch (error) {
+          expect(error).toBeInstanceOf(ValidationError);
+          expect((error as ValidationError).field).toBe('id');
+        }
       });
 
       it('IDが正の整数でない場合バリデーション失敗すること', () => {
@@ -71,9 +77,7 @@ describe('データバリデーション', () => {
         const invalidQuote3 = { ...validQuote, id: 1.5 };
         
         [invalidQuote1, invalidQuote2, invalidQuote3].forEach(quote => {
-          const result = validateQuote(quote);
-          expect(result.isValid).toBe(false);
-          expect(result.errors.some(e => e.field === 'id')).toBe(true);
+          expect(() => validateQuote(quote)).toThrow(ValidationError);
         });
       });
     });
@@ -81,62 +85,56 @@ describe('データバリデーション', () => {
     describe('テキストバリデーション', () => {
       it('テキストが文字列でない場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, text: 123 };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'text')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
 
       it('テキストが空の場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, text: '   ' };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'text')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
 
       it('日本語文字が含まれていない場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, text: 'Only English text' };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'text' && e.reason.includes('Japanese'))).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
+        
+        try {
+          validateQuote(invalidQuote);
+        } catch (error) {
+          expect(error).toBeInstanceOf(ValidationError);
+          expect((error as ValidationError).field).toBe('text');
+          expect((error as ValidationError).reason).toContain('Japanese');
+        }
       });
     });
 
     describe('作者バリデーション', () => {
       it('作者が文字列でない場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, author: 123 };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'author')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
 
       it('作者が空の場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, author: '   ' };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'author')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
     });
 
     describe('カテゴリバリデーション', () => {
       it('カテゴリが文字列でない場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, category: 123 };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'category')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
 
       it('許可されていないカテゴリの場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, category: '無効なカテゴリ' };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'category')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
 
       it('許可されたカテゴリの場合バリデーション成功すること', () => {
@@ -145,7 +143,7 @@ describe('データバリデーション', () => {
         allowedCategories.forEach(category => {
           const quote = { ...validQuote, category };
           const result = validateQuote(quote);
-          expect(result.isValid).toBe(true);
+          expect(result).toEqual({ ...validQuote, category });
         });
       });
     });
@@ -153,18 +151,14 @@ describe('データバリデーション', () => {
     describe('作成日時バリデーション', () => {
       it('作成日時が文字列でない場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, createdAt: new Date() };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'createdAt')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
 
       it('無効なISO8601形式の場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, createdAt: '2024-01-01' };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'createdAt')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
     });
 
@@ -174,23 +168,26 @@ describe('データバリデーション', () => {
         delete quote.tags;
         const result = validateQuote(quote);
         
-        expect(result.isValid).toBe(true);
+        expect(result).toBeDefined();
       });
 
       it('タグが配列でない場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, tags: 'not an array' };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field === 'tags')).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
       });
 
       it('タグ配列に文字列以外が含まれる場合バリデーション失敗すること', () => {
         const invalidQuote = { ...validQuote, tags: ['valid', 123, 'also valid'] };
-        const result = validateQuote(invalidQuote);
         
-        expect(result.isValid).toBe(false);
-        expect(result.errors.some(e => e.field.startsWith('tags['))).toBe(true);
+        expect(() => validateQuote(invalidQuote)).toThrow(ValidationError);
+        
+        try {
+          validateQuote(invalidQuote);
+        } catch (error) {
+          expect(error).toBeInstanceOf(ValidationError);
+          expect((error as ValidationError).field).toMatch(/^tags\[\d+\]/);
+        }
       });
     });
   });
@@ -210,17 +207,18 @@ describe('データバリデーション', () => {
     it('有効なQuote配列をバリデーション成功すること', () => {
       const result = validateQuotes(validQuotes);
       
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-      expect(result.data).toEqual(validQuotes);
+      expect(result).toEqual(validQuotes);
     });
 
     it('配列でない場合バリデーション失敗すること', () => {
-      const result = validateQuotes('not an array');
+      expect(() => validateQuotes('not an array')).toThrow(ValidationError);
       
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].field).toBe('quotes');
+      try {
+        validateQuotes('not an array');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ValidationError);
+        expect((error as ValidationError).field).toBe('quotes');
+      }
     });
 
     it('配列内に無効なQuoteが含まれる場合バリデーション失敗すること', () => {
@@ -230,18 +228,20 @@ describe('データバリデーション', () => {
         validQuotes[1]
       ];
       
-      const result = validateQuotes(invalidQuotes);
+      expect(() => validateQuotes(invalidQuotes)).toThrow(ValidationError);
       
-      expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.field.startsWith('quotes[1].'))).toBe(true);
+      try {
+        validateQuotes(invalidQuotes);
+      } catch (error) {
+        expect(error).toBeInstanceOf(ValidationError);
+        expect((error as ValidationError).field).toMatch(/^quotes\[1\]\./)
+      }
     });
 
     it('空配列の場合バリデーション成功すること', () => {
       const result = validateQuotes([]);
       
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-      expect(result.data).toEqual([]);
+      expect(result).toEqual([]);
     });
   });
 

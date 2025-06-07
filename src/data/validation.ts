@@ -63,21 +63,20 @@ const ALLOWED_CATEGORIES = ['人生', '成功', '愛', '友情', '勇気'] as co
 /**
  * 単一のQuoteオブジェクトをバリデーションする
  * @param data - 検証対象のデータ
- * @returns ValidationResult バリデーション結果
+ * @returns Quote バリデーション済みのQuoteオブジェクト
+ * @throws ValidationError バリデーションに失敗した場合
  */
-export function validateQuote(data: any): ValidationResult {
+export function validateQuote(data: any): Quote {
   const errors: ValidationError[] = [];
 
   // null/undefined チェック
   if (data == null) {
-    errors.push(new ValidationError('quote', data, 'Quote object cannot be null or undefined'));
-    return { isValid: false, errors };
+    throw new ValidationError('quote', data, 'Quote object cannot be null or undefined');
   }
 
   // オブジェクト型チェック
   if (typeof data !== 'object') {
-    errors.push(new ValidationError('quote', data, 'Quote must be an object'));
-    return { isValid: false, errors };
+    throw new ValidationError('quote', data, 'Quote must be an object');
   }
 
   // ID検証
@@ -134,53 +133,47 @@ export function validateQuote(data: any): ValidationResult {
     }
   }
 
-  const isValid = errors.length === 0;
-  return {
-    isValid,
-    errors,
-    data: isValid ? data as Quote : undefined
-  };
+  // エラーがある場合は最初のエラーをスロー
+  if (errors.length > 0) {
+    throw errors[0];
+  }
+
+  return data as Quote;
 }
 
 /**
  * 複数のQuoteオブジェクトをバリデーションする
  * @param data - 検証対象のデータ配列
- * @returns ValidationResult バリデーション結果
+ * @returns Quote[] バリデーション済みのQuote配列
+ * @throws ValidationError バリデーションに失敗した場合
  */
-export function validateQuotes(data: any): ValidationResult {
-  const errors: ValidationError[] = [];
-
+export function validateQuotes(data: any): Quote[] {
   // 配列チェック
   if (!Array.isArray(data)) {
-    errors.push(new ValidationError('quotes', data, 'Data must be an array'));
-    return { isValid: false, errors };
+    throw new ValidationError('quotes', data, 'Data must be an array');
   }
 
   const validQuotes: Quote[] = [];
   
   // 各Quote要素のバリデーション
   for (let i = 0; i < data.length; i++) {
-    const result = validateQuote(data[i]);
-    if (!result.isValid) {
-      // エラーにインデックス情報を付加
-      result.errors.forEach(error => {
-        errors.push(new ValidationError(
+    try {
+      const validQuote = validateQuote(data[i]);
+      validQuotes.push(validQuote);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        // エラーにインデックス情報を付加
+        throw new ValidationError(
           `quotes[${i}].${error.field}`,
           error.value,
           error.reason
-        ));
-      });
-    } else if (result.data) {
-      validQuotes.push(result.data as Quote);
+        );
+      }
+      throw error;
     }
   }
 
-  const isValid = errors.length === 0;
-  return {
-    isValid,
-    errors,
-    data: isValid ? validQuotes : undefined
-  };
+  return validQuotes;
 }
 
 /**
@@ -200,32 +193,31 @@ export function checkDataIntegrity(quotes: Quote[]): DataIntegrityReport {
 
   // 各Quoteを分析
   for (const quote of quotes) {
-    const validation = validateQuote(quote);
-    
-    if (validation.isValid) {
+    try {
+      const validatedQuote = validateQuote(quote);
       validQuotes++;
       
       // ID重複チェック
-      if (seenIds.has(quote.id)) {
-        duplicateIds.push(quote.id);
+      if (seenIds.has(validatedQuote.id)) {
+        duplicateIds.push(validatedQuote.id);
       } else {
-        seenIds.add(quote.id);
+        seenIds.add(validatedQuote.id);
       }
 
       // カテゴリ分布
-      categoryDistribution[quote.category] = (categoryDistribution[quote.category] || 0) + 1;
+      categoryDistribution[validatedQuote.category] = (categoryDistribution[validatedQuote.category] || 0) + 1;
       
       // 作者分布
-      authorDistribution[quote.author] = (authorDistribution[quote.author] || 0) + 1;
-    } else {
+      authorDistribution[validatedQuote.author] = (authorDistribution[validatedQuote.author] || 0) + 1;
+    } catch (error) {
       invalidQuotes++;
       
       // 欠損フィールドの収集
-      validation.errors.forEach(error => {
+      if (error instanceof ValidationError) {
         if (!missingFields.includes(error.field)) {
           missingFields.push(error.field);
         }
-      });
+      }
     }
   }
 
@@ -273,5 +265,65 @@ function isValidISO8601(dateString: string): boolean {
     return date.toISOString() === dateString;
   } catch {
     return false;
+  }
+}
+
+/**
+ * 単一のQuoteオブジェクトをバリデーションする（ValidationResult返却版）
+ * @param data - 検証対象のデータ
+ * @returns ValidationResult バリデーション結果
+ * @deprecated 後方互換性のために提供。新しいコードではvalidateQuote()を使用してください
+ */
+export function validateQuoteWithResult(data: any): ValidationResult {
+  try {
+    const validatedQuote = validateQuote(data);
+    return {
+      isValid: true,
+      errors: [],
+      data: validatedQuote
+    };
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return {
+        isValid: false,
+        errors: [error],
+        data: undefined
+      };
+    }
+    return {
+      isValid: false,
+      errors: [new ValidationError('unknown', data, 'Unknown validation error')],
+      data: undefined
+    };
+  }
+}
+
+/**
+ * 複数のQuoteオブジェクトをバリデーションする（ValidationResult返却版）
+ * @param data - 検証対象のデータ配列
+ * @returns ValidationResult バリデーション結果
+ * @deprecated 後方互換性のために提供。新しいコードではvalidateQuotes()を使用してください
+ */
+export function validateQuotesWithResult(data: any): ValidationResult {
+  try {
+    const validatedQuotes = validateQuotes(data);
+    return {
+      isValid: true,
+      errors: [],
+      data: validatedQuotes
+    };
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return {
+        isValid: false,
+        errors: [error],
+        data: undefined
+      };
+    }
+    return {
+      isValid: false,
+      errors: [new ValidationError('unknown', data, 'Unknown validation error')],
+      data: undefined
+    };
   }
 }

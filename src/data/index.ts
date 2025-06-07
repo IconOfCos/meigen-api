@@ -8,7 +8,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import type { Quote } from '../models/quote.js';
-import { validateQuotes, validateQuote, checkDataIntegrity, ValidationError, type ValidationResult, type DataIntegrityReport } from './validation.js';
+import { validateQuotes, validateQuote, checkDataIntegrity, ValidationError, validateQuotesWithResult, validateQuoteWithResult, type ValidationResult, type DataIntegrityReport } from './validation.js';
 
 /**
  * データアクセスエラーのカスタムクラス
@@ -55,7 +55,7 @@ export async function loadQuotes(): Promise<Quote[]> {
     }
     
     // Quote型の包括的バリデーション
-    const validationResult = validateQuotes(data.quotes);
+    const validationResult = validateQuotesWithResult(data.quotes);
     if (!validationResult.isValid) {
       const errorMessages = validationResult.errors.map(error => error.message).join('; ');
       throw new DataAccessError(
@@ -133,5 +133,5 @@ export function getQuoteCacheStatus(): { isLoaded: boolean; count: number } {
 }
 
 // バリデーション機能の再エクスポート
-export { validateQuote, validateQuotes, checkDataIntegrity, ValidationError, type ValidationResult, type DataIntegrityReport };
+export { validateQuote, validateQuotes, checkDataIntegrity, ValidationError, validateQuotesWithResult, validateQuoteWithResult, type ValidationResult, type DataIntegrityReport };
 
