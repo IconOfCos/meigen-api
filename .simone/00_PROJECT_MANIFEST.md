@@ -24,12 +24,13 @@
 ### 完了したタスク
 - **TX01_S01_Vitest_Setup**: completed (2025-06-07 04:58)
 - **TX02_S02_Data_Access_Layer**: completed (2025-06-07 06:22)
+- **TX03_S02_Quote_Service_Core**: completed (2025-06-07 06:38)
 
 ## S02_M001_Data_Core スプリント
 
 ### 計画済みタスク
 - **T01_S02_Quote_Data_Schema**: not_started (Low, 3-4h)
 - **TX02_S02_Data_Access_Layer**: completed (Medium, 4-5h)
-- **T03_S02_Quote_Service_Core**: not_started (Medium, 5-6h)
+- **TX03_S02_Quote_Service_Core**: completed (Medium, 5-6h)
 - **T04_S02_Search_Filter_Features**: not_started (Medium, 4-5h)
 - **T05_S02_Data_Validation**: not_started (Low, 3-4h)
