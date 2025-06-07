@@ -349,13 +349,20 @@ describe('データバリデーション', () => {
     });
 
     it('予期しないエラーの場合unknownエラーを返すこと', () => {
-      // Just test with null to trigger the normal ValidationError path
-      const result = validateQuoteWithResult(null);
+      // Create a proxy that throws a non-ValidationError on property access
+      const problematicObject = new Proxy({}, {
+        get() {
+          throw new Error('Unexpected system error');
+        }
+      });
+      
+      const result = validateQuoteWithResult(problematicObject);
       
       expect(result.isValid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toBeInstanceOf(ValidationError);
-      expect(result.errors[0].field).toBe('quote');
+      expect(result.errors[0].field).toBe('unknown');
+      expect(result.errors[0].reason).toBe('Unknown validation error');
     });
   });
 
@@ -380,13 +387,36 @@ describe('データバリデーション', () => {
     });
 
     it('予期しないエラーの場合unknownエラーを返すこと', () => {
-      // Just test with null to trigger the normal ValidationError path
-      const result = validateQuotesWithResult(null);
+      // Create a proxy that throws a non-ValidationError on property access
+      const problematicArray = new Proxy([], {
+        get() {
+          throw new ReferenceError('System error during array access');
+        }
+      });
+      
+      const result = validateQuotesWithResult(problematicArray);
       
       expect(result.isValid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toBeInstanceOf(ValidationError);
-      expect(result.errors[0].field).toBe('quotes');
+      expect(result.errors[0].field).toBe('unknown');
+      expect(result.errors[0].reason).toBe('Unknown validation error');
+    });
+  });
+
+  describe('Error propagation edge cases', () => {
+    it('should propagate non-ValidationError during quotes validation', () => {
+      // Create data that causes validateQuote to throw a non-ValidationError
+      const problematicQuotes = [
+        validQuote,
+        new Proxy({}, {
+          get() {
+            throw new TypeError('System error during property access');
+          }
+        })
+      ];
+      
+      expect(() => validateQuotes(problematicQuotes)).toThrow(TypeError);
     });
   });
 });

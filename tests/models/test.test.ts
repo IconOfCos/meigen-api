@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import type { MockQuoteData, TestQuoteData } from '../../src/models/test.js';
 import type { Quote } from '../../src/models/quote.js';
+import { 
+  isMockQuoteData, 
+  isTestQuoteData, 
+  createMockQuoteData, 
+  createTestQuoteData 
+} from '../../src/models/test.js';
 
 describe('Test Models Tests', () => {
   describe('MockQuoteData interface', () => {
@@ -250,6 +256,111 @@ describe('Test Models Tests', () => {
       expect(isValidQuote(testData.invalid.missingRequired)).toBe(false);
       expect(isValidQuote(testData.invalid.wrongType)).toBe(false);
       expect(isValidQuote(testData.invalid.empty)).toBe(false);
+    });
+  });
+
+  describe('Utility functions', () => {
+    describe('isMockQuoteData', () => {
+      it('should return true for valid MockQuoteData', () => {
+        const validData = createMockQuoteData();
+        expect(isMockQuoteData(validData)).toBe(true);
+        
+        const dataWithQuotes = createMockQuoteData([{
+          id: 1,
+          text: 'Test',
+          author: 'Author',
+          category: 'category'
+        }], ['invalid']);
+        expect(isMockQuoteData(dataWithQuotes)).toBe(true);
+      });
+
+      it('should return false for invalid objects', () => {
+        expect(isMockQuoteData(null)).toBe(false);
+        expect(isMockQuoteData(undefined)).toBe(false);
+        expect(isMockQuoteData('string')).toBe(false);
+        expect(isMockQuoteData({})).toBe(false);
+        expect(isMockQuoteData({ quotes: 'not array' })).toBe(false);
+        expect(isMockQuoteData({ invalidQuotes: 'not array' })).toBe(false);
+      });
+    });
+
+    describe('isTestQuoteData', () => {
+      it('should return true for valid TestQuoteData', () => {
+        const validQuote: Quote = {
+          id: 1,
+          text: 'Test',
+          author: 'Author',
+          category: 'category'
+        };
+        const testData = createTestQuoteData(validQuote);
+        expect(isTestQuoteData(testData)).toBe(true);
+      });
+
+      it('should return false for invalid objects', () => {
+        expect(isTestQuoteData(null)).toBe(false);
+        expect(isTestQuoteData(undefined)).toBe(false);
+        expect(isTestQuoteData('string')).toBe(false);
+        expect(isTestQuoteData({})).toBe(false);
+        expect(isTestQuoteData({ valid: 'not object' })).toBe(false);
+        expect(isTestQuoteData({ invalid: null })).toBe(false);
+      });
+    });
+
+    describe('createMockQuoteData', () => {
+      it('should create empty MockQuoteData when no arguments provided', () => {
+        const mockData = createMockQuoteData();
+        expect(mockData.quotes).toEqual([]);
+        expect(mockData.invalidQuotes).toEqual([]);
+      });
+
+      it('should create MockQuoteData with provided data', () => {
+        const quotes: Quote[] = [{
+          id: 1,
+          text: 'Test',
+          author: 'Author',
+          category: 'category'
+        }];
+        const invalidQuotes = ['invalid', null, 123];
+        
+        const mockData = createMockQuoteData(quotes, invalidQuotes);
+        expect(mockData.quotes).toEqual(quotes);
+        expect(mockData.invalidQuotes).toEqual(invalidQuotes);
+      });
+    });
+
+    describe('createTestQuoteData', () => {
+      it('should create TestQuoteData with valid quote and default invalid data', () => {
+        const validQuote: Quote = {
+          id: 1,
+          text: 'Test',
+          author: 'Author',
+          category: 'category'
+        };
+        
+        const testData = createTestQuoteData(validQuote);
+        expect(testData.valid).toEqual(validQuote);
+        expect(testData.invalid.missingRequired).toEqual({});
+        expect(testData.invalid.wrongType).toEqual({});
+        expect(testData.invalid.empty).toEqual({});
+      });
+
+      it('should create TestQuoteData with custom invalid data', () => {
+        const validQuote: Quote = {
+          id: 1,
+          text: 'Test',
+          author: 'Author',
+          category: 'category'
+        };
+        const missingRequired = { id: 1, text: 'Test' };
+        const wrongType = { id: 'wrong', text: 123 };
+        const empty = {};
+        
+        const testData = createTestQuoteData(validQuote, missingRequired, wrongType, empty);
+        expect(testData.valid).toEqual(validQuote);
+        expect(testData.invalid.missingRequired).toEqual(missingRequired);
+        expect(testData.invalid.wrongType).toEqual(wrongType);
+        expect(testData.invalid.empty).toEqual(empty);
+      });
     });
   });
 });

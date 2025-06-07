@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { QuoteQueryParams, QuotePathParams } from '../../src/models/request.js';
+import { isQuoteQueryParams, isQuotePathParams, getDefaultQueryParams } from '../../src/models/request.js';
 
 describe('Request Models Tests', () => {
   describe('QuoteQueryParams interface', () => {
@@ -175,6 +176,80 @@ describe('Request Models Tests', () => {
       expect(params.id).toBe('123');
       expect(params.category).toBe('motivation');
       expect(params.author).toBe('Einstein');
+    });
+  });
+
+  describe('Type guard functions', () => {
+    describe('isQuoteQueryParams', () => {
+      it('should return true for valid QuoteQueryParams', () => {
+        expect(isQuoteQueryParams({})).toBe(true);
+        expect(isQuoteQueryParams({ limit: 10 })).toBe(true);
+        expect(isQuoteQueryParams({ limit: 10, offset: 5, page: 2 })).toBe(true);
+      });
+
+      it('should return false for invalid objects', () => {
+        expect(isQuoteQueryParams(null)).toBe(false);
+        expect(isQuoteQueryParams(undefined)).toBe(false);
+        expect(isQuoteQueryParams('string')).toBe(false);
+        expect(isQuoteQueryParams(123)).toBe(false);
+        expect(isQuoteQueryParams({ limit: 'not a number' })).toBe(false);
+        expect(isQuoteQueryParams({ offset: 'invalid' })).toBe(false);
+        expect(isQuoteQueryParams({ page: false })).toBe(false);
+      });
+    });
+
+    describe('isQuotePathParams', () => {
+      it('should return true for valid QuotePathParams', () => {
+        expect(isQuotePathParams({})).toBe(true);
+        expect(isQuotePathParams({ id: '123' })).toBe(true);
+        expect(isQuotePathParams({ id: '123', category: 'test', author: 'author' })).toBe(true);
+      });
+
+      it('should return false for invalid objects', () => {
+        expect(isQuotePathParams(null)).toBe(false);
+        expect(isQuotePathParams(undefined)).toBe(false);
+        expect(isQuotePathParams('string')).toBe(false);
+        expect(isQuotePathParams(123)).toBe(false);
+        expect(isQuotePathParams({ id: 123 })).toBe(false);
+        expect(isQuotePathParams({ category: false })).toBe(false);
+        expect(isQuotePathParams({ author: [] })).toBe(false);
+      });
+    });
+
+    describe('getDefaultQueryParams', () => {
+      it('should return default values when no params provided', () => {
+        const defaults = getDefaultQueryParams();
+        expect(defaults).toEqual({
+          limit: 10,
+          offset: 0,
+          page: 1
+        });
+      });
+
+      it('should override defaults with provided values', () => {
+        const params = getDefaultQueryParams({ limit: 20, page: 3 });
+        expect(params).toEqual({
+          limit: 20,
+          offset: 0,
+          page: 3
+        });
+      });
+
+      it('should handle partial parameter objects', () => {
+        const params1 = getDefaultQueryParams({ limit: 5 });
+        expect(params1).toEqual({
+          limit: 5,
+          offset: 0,
+          page: 1
+        });
+
+        const params2 = getDefaultQueryParams({ offset: 10 });
+        expect(params2).toEqual({
+          limit: 10,
+          offset: 10,
+          page: 1
+        });
+      });
     });
   });
 });
