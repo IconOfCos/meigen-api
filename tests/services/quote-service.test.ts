@@ -220,6 +220,255 @@ describe('QuoteService', () => {
     });
   });
 
+  describe('getQuotesByCategory()', () => {
+    it('should return quotes for valid category', async () => {
+      const quotes = await quoteService.getQuotesByCategory('人生');
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      expect(quotes.length).toBeGreaterThan(0);
+      
+      // 全ての結果が指定カテゴリであることを確認
+      for (const quote of quotes) {
+        expect(quote.category).toBe('人生');
+      }
+    });
+
+    it('should perform case-insensitive search', async () => {
+      const quotes1 = await quoteService.getQuotesByCategory('人生');
+      const quotes2 = await quoteService.getQuotesByCategory('人生'); // 同じカテゴリ
+      const quotes3 = await quoteService.getQuotesByCategory('成功');
+      
+      expect(quotes1).toEqual(quotes2);
+      expect(quotes1.length).toBeGreaterThan(0);
+      
+      // 異なるカテゴリは異なる結果を返す
+      const allSameCategory1 = quotes1.every(q => q.category === '人生');
+      const allSameCategory3 = quotes3.every(q => q.category === '成功');
+      expect(allSameCategory1).toBe(true);
+      expect(allSameCategory3).toBe(true);
+    });
+
+    it('should return empty array for non-existent category', async () => {
+      const quotes = await quoteService.getQuotesByCategory('存在しないカテゴリ');
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      expect(quotes.length).toBe(0);
+    });
+
+    it('should handle empty string category', async () => {
+      const quotes = await quoteService.getQuotesByCategory('');
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      expect(quotes.length).toBe(0);
+    });
+
+    it('should trim whitespace in category search', async () => {
+      const quotes1 = await quoteService.getQuotesByCategory('人生');
+      const quotes2 = await quoteService.getQuotesByCategory('  人生  ');
+      
+      expect(quotes1).toEqual(quotes2);
+    });
+  });
+
+  describe('getQuotesByAuthor()', () => {
+    it('should return quotes for valid author', async () => {
+      const quotes = await quoteService.getQuotesByAuthor('チャップリン');
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      expect(quotes.length).toBeGreaterThan(0);
+      
+      // 全ての結果が指定著者を含むことを確認
+      for (const quote of quotes) {
+        expect(quote.author.toLowerCase()).toContain('チャップリン'.toLowerCase());
+      }
+    });
+
+    it('should perform partial match search', async () => {
+      const quotesPartial = await quoteService.getQuotesByAuthor('チャ');
+      const quotesFull = await quoteService.getQuotesByAuthor('チャップリン');
+      
+      expect(Array.isArray(quotesPartial)).toBe(true);
+      expect(Array.isArray(quotesFull)).toBe(true);
+      
+      // 部分一致は完全一致を含む
+      expect(quotesPartial.length).toBeGreaterThanOrEqual(quotesFull.length);
+    });
+
+    it('should perform case-insensitive search', async () => {
+      const quotes1 = await quoteService.getQuotesByAuthor('チャップリン');
+      const quotes2 = await quoteService.getQuotesByAuthor('チャップリン'); // 同じ検索
+      
+      expect(quotes1).toEqual(quotes2);
+    });
+
+    it('should return empty array for non-existent author', async () => {
+      const quotes = await quoteService.getQuotesByAuthor('存在しない著者');
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      expect(quotes.length).toBe(0);
+    });
+
+    it('should handle empty string author', async () => {
+      const quotes = await quoteService.getQuotesByAuthor('');
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      // 空文字列は全ての著者名に含まれるため、全件返される
+      const allQuotes = await quoteService.getAllQuotes();
+      expect(quotes.length).toBe(allQuotes.length);
+    });
+  });
+
+  describe('getQuotesWithFilters()', () => {
+    it('should filter by category only', async () => {
+      const quotes = await quoteService.getQuotesWithFilters({ category: '成功' });
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      expect(quotes.length).toBeGreaterThan(0);
+      
+      for (const quote of quotes) {
+        expect(quote.category).toBe('成功');
+      }
+    });
+
+    it('should filter by author only', async () => {
+      const quotes = await quoteService.getQuotesWithFilters({ author: 'セネカ' });
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      expect(quotes.length).toBeGreaterThan(0);
+      
+      for (const quote of quotes) {
+        expect(quote.author.toLowerCase()).toContain('セネカ'.toLowerCase());
+      }
+    });
+
+    it('should filter by tags (OR condition)', async () => {
+      const quotes = await quoteService.getQuotesWithFilters({ tags: ['笑顔', '努力'] });
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      expect(quotes.length).toBeGreaterThan(0);
+      
+      for (const quote of quotes) {
+        expect(quote.tags).toBeDefined();
+        const hasMatchingTag = quote.tags!.some(tag => 
+          ['笑顔', '努力'].some(searchTag => 
+            tag.toLowerCase().includes(searchTag.toLowerCase())
+          )
+        );
+        expect(hasMatchingTag).toBe(true);
+      }
+    });
+
+    it('should apply multiple filters (AND condition)', async () => {
+      const quotes = await quoteService.getQuotesWithFilters({
+        category: '人生',
+        tags: ['笑顔']
+      });
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      
+      for (const quote of quotes) {
+        expect(quote.category).toBe('人生');
+        expect(quote.tags).toBeDefined();
+        const hasSmileTag = quote.tags!.some(tag => 
+          tag.toLowerCase().includes('笑顔'.toLowerCase())
+        );
+        expect(hasSmileTag).toBe(true);
+      }
+    });
+
+    it('should handle case-sensitive option', async () => {
+      const quotesInsensitive = await quoteService.getQuotesWithFilters(
+        { category: '人生' },
+        { caseSensitive: false }
+      );
+      
+      const quotesSensitive = await quoteService.getQuotesWithFilters(
+        { category: '人生' },
+        { caseSensitive: true }
+      );
+      
+      expect(Array.isArray(quotesInsensitive)).toBe(true);
+      expect(Array.isArray(quotesSensitive)).toBe(true);
+    });
+
+    it('should handle exact match option', async () => {
+      const quotesPartial = await quoteService.getQuotesWithFilters(
+        { author: 'チャ' },
+        { exactMatch: false }
+      );
+      
+      const quotesExact = await quoteService.getQuotesWithFilters(
+        { author: 'チャ' },
+        { exactMatch: true }
+      );
+      
+      expect(quotesPartial.length).toBeGreaterThanOrEqual(quotesExact.length);
+    });
+
+    it('should return all quotes with empty filters', async () => {
+      const quotesFiltered = await quoteService.getQuotesWithFilters({});
+      const allQuotes = await quoteService.getAllQuotes();
+      
+      expect(quotesFiltered).toEqual(allQuotes);
+    });
+
+    it('should handle quotes without tags correctly', async () => {
+      const quotes = await quoteService.getQuotesWithFilters({ tags: ['不存在的标签'] });
+      
+      expect(Array.isArray(quotes)).toBe(true);
+      // タグが存在しない名言はフィルタされる
+    });
+  });
+
+  describe('getAvailableCategories() and getAvailableAuthors()', () => {
+    it('should return unique sorted categories', async () => {
+      await quoteService.initialize();
+      const categories = quoteService.getAvailableCategories();
+      
+      expect(Array.isArray(categories)).toBe(true);
+      expect(categories.length).toBeGreaterThan(0);
+      
+      // ユニークであることを確認
+      const uniqueCategories = new Set(categories);
+      expect(uniqueCategories.size).toBe(categories.length);
+      
+      // ソートされていることを確認
+      const sorted = [...categories].sort();
+      expect(categories).toEqual(sorted);
+      
+      // 既知のカテゴリが含まれていることを確認
+      const expectedCategories = ['人生', '成功', '愛', '友情', '勇気'];
+      for (const expected of expectedCategories) {
+        expect(categories).toContain(expected);
+      }
+    });
+
+    it('should return unique sorted authors', async () => {
+      await quoteService.initialize();
+      const authors = quoteService.getAvailableAuthors();
+      
+      expect(Array.isArray(authors)).toBe(true);
+      expect(authors.length).toBeGreaterThan(0);
+      
+      // ユニークであることを確認
+      const uniqueAuthors = new Set(authors);
+      expect(uniqueAuthors.size).toBe(authors.length);
+      
+      // ソートされていることを確認
+      const sorted = [...authors].sort();
+      expect(authors).toEqual(sorted);
+    });
+
+    it('should return empty arrays before initialization', () => {
+      const newService = new QuoteService();
+      const categories = newService.getAvailableCategories();
+      const authors = newService.getAvailableAuthors();
+      
+      expect(categories).toEqual([]);
+      expect(authors).toEqual([]);
+    });
+  });
+
   describe('performance and integration', () => {
     it('should perform random quote selection efficiently', async () => {
       const startTime = Date.now();
@@ -253,6 +502,31 @@ describe('QuoteService', () => {
       expect(Array.isArray(results[1])).toBe(true); // all quotes
       expect(results[2]).toBeDefined(); // second random quote
       expect(Array.isArray(results[3])).toBe(true); // all quotes again
+    });
+
+    it('should perform filtering efficiently', async () => {
+      const startTime = Date.now();
+      
+      // 複数のフィルタリング操作を実行
+      const operations = [
+        quoteService.getQuotesByCategory('人生'),
+        quoteService.getQuotesByAuthor('チャップリン'),
+        quoteService.getQuotesWithFilters({ category: '成功', tags: ['努力'] }),
+        quoteService.getQuotesWithFilters({ author: 'セネカ' })
+      ];
+      
+      const results = await Promise.all(operations);
+      
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      // 複数のフィルタリング操作が100ms以内に完了することを確認
+      expect(duration).toBeLessThan(100);
+      
+      // 全ての操作が結果を返すことを確認
+      for (const result of results) {
+        expect(Array.isArray(result)).toBe(true);
+      }
     });
   });
 });

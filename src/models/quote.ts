@@ -38,6 +38,30 @@ export type CreateQuoteRequest = Omit<Quote, 'id' | 'createdAt'>;
 export type UpdateQuoteRequest = Partial<Omit<Quote, 'id' | 'createdAt'>>;
 
 /**
+ * 名言フィルタリング用の条件型
+ * 各条件はオプショナルで、指定された条件のみ適用される
+ */
+export interface QuoteFilters {
+  /** カテゴリでフィルタリング */
+  category?: string;
+  /** 著者名でフィルタリング */
+  author?: string;
+  /** タグでフィルタリング（複数指定時はOR条件） */
+  tags?: string[];
+}
+
+/**
+ * 名言検索オプション型
+ * 検索時の動作を制御するオプション
+ */
+export interface QuoteSearchOptions {
+  /** 大文字小文字を区別するか（デフォルト: false） */
+  caseSensitive?: boolean;
+  /** 完全一致で検索するか（デフォルト: false） */
+  exactMatch?: boolean;
+}
+
+/**
  * 型ガード関数：オブジェクトがQuote型かどうかを判定
  * @param obj - 判定対象のオブジェクト
  * @returns Quote型の場合true、それ以外false

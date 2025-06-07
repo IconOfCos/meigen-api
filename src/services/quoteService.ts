@@ -5,7 +5,7 @@
  * 基本的なデータ操作機能を提供し、API層とデータ層の架け橋となるサービス層
  */
 
-import type { Quote } from '../models/quote.js';
+import type { Quote, QuoteFilters, QuoteSearchOptions } from '../models/quote.js';
 import { loadQuotes, DataAccessError } from '../data/index.js';
 
 /**
@@ -119,6 +119,137 @@ export class QuoteService {
    */
   getQuoteCount(): number {
     return this.quotes.length;
+  }
+
+  /**
+   * カテゴリ別に名言を取得する
+   * @param category 取得するカテゴリ名
+   * @returns Promise<Quote[]> 指定されたカテゴリの名言の配列
+   * @throws QuoteServiceError サービスが初期化されていない場合
+   */
+  async getQuotesByCategory(category: string): Promise<Quote[]> {
+    await this.ensureInitialized();
+
+    // 大文字小文字を区別しない検索
+    const normalizedCategory = category.toLowerCase().trim();
+    
+    return this.quotes.filter(quote => 
+      quote.category.toLowerCase().trim() === normalizedCategory
+    );
+  }
+
+  /**
+   * 著者別に名言を取得する
+   * @param author 取得する著者名
+   * @returns Promise<Quote[]> 指定された著者の名言の配列
+   * @throws QuoteServiceError サービスが初期化されていない場合
+   */
+  async getQuotesByAuthor(author: string): Promise<Quote[]> {
+    await this.ensureInitialized();
+
+    // 大文字小文字を区別しない部分一致検索
+    const normalizedAuthor = author.toLowerCase().trim();
+    
+    return this.quotes.filter(quote => 
+      quote.author.toLowerCase().includes(normalizedAuthor)
+    );
+  }
+
+  /**
+   * 複合フィルタを使用して名言を取得する
+   * @param filters フィルタ条件
+   * @param options 検索オプション
+   * @returns Promise<Quote[]> フィルタ条件に一致する名言の配列
+   * @throws QuoteServiceError サービスが初期化されていない場合
+   */
+  async getQuotesWithFilters(
+    filters: QuoteFilters, 
+    options: QuoteSearchOptions = {}
+  ): Promise<Quote[]> {
+    await this.ensureInitialized();
+
+    const { caseSensitive = false, exactMatch = false } = options;
+
+    let filteredQuotes = [...this.quotes];
+
+    // カテゴリフィルタ
+    if (filters.category !== undefined && filters.category !== '') {
+      const categoryToMatch = caseSensitive 
+        ? filters.category.trim() 
+        : filters.category.toLowerCase().trim();
+      
+      filteredQuotes = filteredQuotes.filter(quote => {
+        const quoteCategory = caseSensitive 
+          ? quote.category.trim() 
+          : quote.category.toLowerCase().trim();
+        
+        return exactMatch 
+          ? quoteCategory === categoryToMatch
+          : quoteCategory.includes(categoryToMatch);
+      });
+    }
+
+    // 著者フィルタ
+    if (filters.author !== undefined && filters.author !== '') {
+      const authorToMatch = caseSensitive 
+        ? filters.author.trim() 
+        : filters.author.toLowerCase().trim();
+      
+      filteredQuotes = filteredQuotes.filter(quote => {
+        const quoteAuthor = caseSensitive 
+          ? quote.author.trim() 
+          : quote.author.toLowerCase().trim();
+        
+        return exactMatch 
+          ? quoteAuthor === authorToMatch
+          : quoteAuthor.includes(authorToMatch);
+      });
+    }
+
+    // タグフィルタ（OR条件）
+    if (filters.tags && filters.tags.length > 0) {
+      const tagsToMatch = filters.tags.map(tag => 
+        caseSensitive ? tag.trim() : tag.toLowerCase().trim()
+      );
+      
+      filteredQuotes = filteredQuotes.filter(quote => {
+        if (!quote.tags || quote.tags.length === 0) {
+          return false;
+        }
+        
+        return quote.tags.some(quoteTag => {
+          const normalizedQuoteTag = caseSensitive 
+            ? quoteTag.trim() 
+            : quoteTag.toLowerCase().trim();
+          
+          return tagsToMatch.some(tagToMatch => 
+            exactMatch 
+              ? normalizedQuoteTag === tagToMatch
+              : normalizedQuoteTag.includes(tagToMatch)
+          );
+        });
+      });
+    }
+
+    return filteredQuotes;
+  }
+
+  /**
+   * 利用可能なカテゴリの一覧を取得する
+   * @returns string[] ユニークなカテゴリ名の配列
+   */
+  getAvailableCategories(): string[] {
+    const categories = new Set(this.quotes.map(quote => quote.category));
+    return Array.from(categories).sort();
+  }
+
+  /**
+   * 利用可能な著者の一覧を取得する
+   * @returns string[] ユニークな著者名の配列
+   */
+  getAvailableAuthors(): string[] {
+    const authors = new Set(this.quotes.map(quote => quote.author));
+    return Array.from(authors).sort();
   }
 
   /**
