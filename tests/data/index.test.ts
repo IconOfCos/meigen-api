@@ -107,7 +107,7 @@ describe('データアクセス層', () => {
       vi.spyOn(fs, 'readFile').mockResolvedValue(JSON.stringify(invalidQuoteData));
 
       await expect(loadQuotes()).rejects.toThrow(DataAccessError);
-      await expect(loadQuotes()).rejects.toThrow('Invalid quote structure');
+      await expect(loadQuotes()).rejects.toThrow('Data validation failed');
     });
   });
 

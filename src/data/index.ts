@@ -8,6 +8,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import type { Quote } from '../models/quote.js';
+import { validateQuotes, validateQuote, checkDataIntegrity, ValidationError, type ValidationResult, type DataIntegrityReport } from './validation.js';
 
 /**
  * データアクセスエラーのカスタムクラス
@@ -53,21 +54,20 @@ export async function loadQuotes(): Promise<Quote[]> {
       );
     }
     
-    // Quote型の検証
-    const quotes: Quote[] = data.quotes;
-    for (const quote of quotes) {
-      if (!isValidQuote(quote)) {
-        throw new DataAccessError(
-          `Invalid quote structure at id ${(quote as any)?.id || 'unknown'}`,
-          'INVALID_QUOTE_STRUCTURE'
-        );
-      }
+    // Quote型の包括的バリデーション
+    const validationResult = validateQuotes(data.quotes);
+    if (!validationResult.isValid) {
+      const errorMessages = validationResult.errors.map(error => error.message).join('; ');
+      throw new DataAccessError(
+        `Data validation failed: ${errorMessages}`,
+        'VALIDATION_FAILED'
+      );
     }
     
-    // キャッシュに保存
-    quotesCache = quotes;
+    // バリデーション済みデータをキャッシュに保存
+    quotesCache = validationResult.data as Quote[];
     
-    return quotes;
+    return quotesCache;
     
   } catch (error) {
     // ファイルシステムエラーのハンドリング
@@ -132,24 +132,6 @@ export function getQuoteCacheStatus(): { isLoaded: boolean; count: number } {
   };
 }
 
-/**
- * オブジェクトが有効なQuote型かどうかを検証する
- * @param obj 検証対象のオブジェクト
- * @returns Quote型として有効な場合true
- */
-function isValidQuote(obj: any): obj is Quote {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof obj.id === 'number' &&
-    typeof obj.text === 'string' &&
-    obj.text.length > 0 &&
-    typeof obj.author === 'string' &&
-    obj.author.length > 0 &&
-    typeof obj.category === 'string' &&
-    obj.category.length > 0 &&
-    typeof obj.createdAt === 'string' &&
-    obj.createdAt.length > 0 &&
-    (obj.tags === undefined || Array.isArray(obj.tags))
-  );
-}
+// バリデーション機能の再エクスポート
+export { validateQuote, validateQuotes, checkDataIntegrity, ValidationError, type ValidationResult, type DataIntegrityReport };
+
