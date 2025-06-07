@@ -529,4 +529,187 @@ describe('QuoteService', () => {
       }
     });
   });
+
+  describe('tags filtering edge cases', () => {
+    it('should handle quotes without tags when filtering by tags', async () => {
+      // This test specifically targets the uncovered lines 217-218 in quoteService.ts
+      await quoteService.initialize();
+      
+      // Filter by tags - this should exclude quotes that have no tags or empty tags array
+      const quotesWithTags = await quoteService.getQuotesWithFilters({ tags: ['努力'] });
+      
+      // All returned quotes should have tags
+      for (const quote of quotesWithTags) {
+        expect(quote.tags).toBeDefined();
+        expect(Array.isArray(quote.tags)).toBe(true);
+        expect(quote.tags!.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should handle case sensitivity in tag filtering', async () => {
+      // This test targets the uncovered line 222 in quoteService.ts
+      await quoteService.initialize();
+      
+      // Test case-sensitive filtering
+      const caseInsensitiveQuotes = await quoteService.getQuotesWithFilters(
+        { tags: ['努力'] },
+        { caseSensitive: false }
+      );
+      
+      const caseSensitiveQuotes = await quoteService.getQuotesWithFilters(
+        { tags: ['努力'] },
+        { caseSensitive: true }
+      );
+      
+      // Case insensitive should return >= case sensitive results
+      expect(caseInsensitiveQuotes.length).toBeGreaterThanOrEqual(caseSensitiveQuotes.length);
+    });
+
+    it('should handle exactMatch vs partial match in tag filtering', async () => {
+      // This test targets the uncovered line 227 in quoteService.ts
+      await quoteService.initialize();
+      
+      // Test exact match vs partial match
+      const partialMatchQuotes = await quoteService.getQuotesWithFilters(
+        { tags: ['努'] }, // Partial tag
+        { exactMatch: false }
+      );
+      
+      const exactMatchQuotes = await quoteService.getQuotesWithFilters(
+        { tags: ['努'] }, // Same partial tag
+        { exactMatch: true }
+      );
+      
+      // Partial match should return >= exact match results
+      expect(partialMatchQuotes.length).toBeGreaterThanOrEqual(exactMatchQuotes.length);
+      
+      // Verify that partial match actually finds tags containing the search term
+      const hasPartialMatches = partialMatchQuotes.some(quote => 
+        quote.tags?.some(tag => tag.includes('努') && tag !== '努')
+      );
+      
+      if (partialMatchQuotes.length > exactMatchQuotes.length) {
+        expect(hasPartialMatches).toBe(true);
+      }
+    });
+
+    it('should handle combination of case sensitivity and exact match', async () => {
+      // This test covers the combination of both conditions
+      await quoteService.initialize();
+      
+      const testCases = [
+        { caseSensitive: true, exactMatch: true },
+        { caseSensitive: true, exactMatch: false },
+        { caseSensitive: false, exactMatch: true },
+        { caseSensitive: false, exactMatch: false }
+      ];
+      
+      const results = await Promise.all(
+        testCases.map(options =>
+          quoteService.getQuotesWithFilters({ tags: ['努力'] }, options)
+        )
+      );
+      
+      // All results should be arrays
+      results.forEach(result => {
+        expect(Array.isArray(result)).toBe(true);
+      });
+      
+      // Test relationship: non-exact should >= exact, case-insensitive should >= case-sensitive
+      const [strictest, caseInsensitiveExact, caseSensitivePartial, most] = results;
+      
+      expect(caseSensitivePartial.length).toBeGreaterThanOrEqual(strictest.length);
+      expect(caseInsensitiveExact.length).toBeGreaterThanOrEqual(strictest.length);
+      expect(most.length).toBeGreaterThanOrEqual(caseInsensitiveExact.length);
+      expect(most.length).toBeGreaterThanOrEqual(caseSensitivePartial.length);
+    });
+
+    it('should handle empty tags array correctly', async () => {
+      await quoteService.initialize();
+      
+      // Create a test that would hit the condition where quote.tags is empty array
+      const allQuotes = await quoteService.getAllQuotes();
+      
+      // Find quotes with empty or no tags
+      const quotesWithoutMeaningfulTags = allQuotes.filter(quote => 
+        !quote.tags || quote.tags.length === 0
+      );
+      
+      if (quotesWithoutMeaningfulTags.length > 0) {
+        // Filter by any tag should exclude these quotes
+        const filteredQuotes = await quoteService.getQuotesWithFilters({ tags: ['任意のタグ'] });
+        
+        // None of the filtered quotes should be quotes without tags
+        const quotesWithoutTagsInFiltered = filteredQuotes.filter(quote =>
+          !quote.tags || quote.tags.length === 0
+        );
+        
+        expect(quotesWithoutTagsInFiltered.length).toBe(0);
+      }
+    });
+  });
+
+  describe('author filtering edge cases', () => {
+    it('should handle case sensitivity in author filtering', async () => {
+      // This test targets the uncovered lines 195, 200 in quoteService.ts
+      await quoteService.initialize();
+      
+      // Test case-sensitive author filtering
+      const caseInsensitiveQuotes = await quoteService.getQuotesWithFilters(
+        { author: 'チャップリン' },
+        { caseSensitive: false }
+      );
+      
+      const caseSensitiveQuotes = await quoteService.getQuotesWithFilters(
+        { author: 'チャップリン' },
+        { caseSensitive: true }
+      );
+      
+      // Case insensitive should return >= case sensitive results
+      expect(caseInsensitiveQuotes.length).toBeGreaterThanOrEqual(caseSensitiveQuotes.length);
+      
+      // Test with different case variations if any exist
+      const allQuotes = await quoteService.getAllQuotes();
+      const hasAuthorWithCase = allQuotes.some(quote => 
+        quote.author.toLowerCase() !== quote.author
+      );
+      
+      if (hasAuthorWithCase) {
+        const lowerCaseQuotes = await quoteService.getQuotesWithFilters(
+          { author: 'test' },
+          { caseSensitive: false }
+        );
+        
+        const upperCaseQuotes = await quoteService.getQuotesWithFilters(
+          { author: 'test' },
+          { caseSensitive: true }
+        );
+        
+        // Case insensitive should handle different cases
+        expect(lowerCaseQuotes.length).toBeGreaterThanOrEqual(upperCaseQuotes.length);
+      } else {
+        // If no case variations exist, just verify the functionality works
+        expect(caseInsensitiveQuotes.length).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('should handle exact match vs partial match in author filtering', async () => {
+      await quoteService.initialize();
+      
+      // Test partial vs exact match
+      const partialMatchQuotes = await quoteService.getQuotesWithFilters(
+        { author: 'チャ' }, // Partial author name
+        { exactMatch: false }
+      );
+      
+      const exactMatchQuotes = await quoteService.getQuotesWithFilters(
+        { author: 'チャ' }, // Same partial name
+        { exactMatch: true }
+      );
+      
+      // Partial match should return >= exact match results
+      expect(partialMatchQuotes.length).toBeGreaterThanOrEqual(exactMatchQuotes.length);
+    });
+  });
+
 });

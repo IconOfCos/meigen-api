@@ -4,7 +4,7 @@
 - **名前**: Japanese Quotes API
 - **マイルストーン**: M001_API_FOUNDATION
 - **現在のスプリント**: S04_M001_Quality_Assurance
-- **最終更新**: 2025-06-07 18:42
+- **最終更新**: 2025-06-07 19:35
 
 ## スプリントステータス
 
@@ -27,6 +27,10 @@
 - **ステータス**: completed
 - **開始日**: 2025-06-07 18:29
 - **完了日**: 2025-06-07 18:42
+
+## 汎用タスク
+
+- [x] T001: テストカバレッジを100%にする - Status: Completed - [TX001](04_GENERAL_TASKS/TX001_Test_Coverage_100_Percent.md)
 
 ## タスクステータス
 
@@ -55,3 +59,6 @@
 
 #### S04スプリント
 - **S04_M001_Quality_Assurance**: completed (2025-06-07 18:42)
+
+#### 汎用タスク
+- **TX001_Test_Coverage_100_Percent**: completed (2025-06-07 19:35)

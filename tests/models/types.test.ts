@@ -230,6 +230,39 @@ describe('Quote Data Schema Types', () => {
       expect(isQuote(undefined)).toBe(false)
     })
 
+    it('isQuote関数でtags配列チェックが正しく動作する', () => {
+      const quoteWithUndefinedTags = {
+        id: 1,
+        text: 'テスト名言',
+        author: 'テスト著者',
+        category: 'テスト',
+        createdAt: '2025-06-07T05:51:00Z',
+        tags: undefined
+      }
+
+      const quoteWithNullTags = {
+        id: 2,
+        text: 'テスト名言2',
+        author: 'テスト著者2',
+        category: 'テスト',
+        createdAt: '2025-06-07T05:51:00Z',
+        tags: null
+      }
+
+      const quoteWithInvalidTags = {
+        id: 3,
+        text: 'テスト名言3',
+        author: 'テスト著者3',
+        category: 'テスト',
+        createdAt: '2025-06-07T05:51:00Z',
+        tags: 'not an array'
+      }
+
+      expect(isQuote(quoteWithUndefinedTags)).toBe(true)
+      expect(isQuote(quoteWithNullTags)).toBe(false)
+      expect(isQuote(quoteWithInvalidTags)).toBe(false)
+    })
+
     it('isAPIResponse関数が正しく動作する', () => {
       const validResponse = {
         success: true,
@@ -247,6 +280,29 @@ describe('Quote Data Schema Types', () => {
 
       expect(isAPIResponse(validResponse)).toBe(true)
       expect(isAPIResponse(invalidResponse)).toBe(false)
+      
+      // Additional edge cases for full coverage
+      expect(isAPIResponse(null)).toBe(false)
+      expect(isAPIResponse(undefined)).toBe(false)
+      expect(isAPIResponse('string')).toBe(false)
+      expect(isAPIResponse(123)).toBe(false)
+      expect(isAPIResponse([])).toBe(false)
+      
+      // meta is null case
+      expect(isAPIResponse({
+        success: true,
+        data: { test: 'data' },
+        meta: null
+      })).toBe(false)
+      
+      // meta.timestamp is not string
+      expect(isAPIResponse({
+        success: true,
+        data: { test: 'data' },
+        meta: {
+          timestamp: 123
+        }
+      })).toBe(false)
     })
 
     it('isErrorResponse関数が正しく動作する', () => {
@@ -274,6 +330,56 @@ describe('Quote Data Schema Types', () => {
 
       expect(isErrorResponse(validErrorResponse)).toBe(true)
       expect(isErrorResponse(invalidErrorResponse)).toBe(false)
+      
+      // Additional edge cases for full coverage
+      expect(isErrorResponse(null)).toBe(false)
+      expect(isErrorResponse(undefined)).toBe(false)
+      expect(isErrorResponse('string')).toBe(false)
+      expect(isErrorResponse(123)).toBe(false)
+      expect(isErrorResponse([])).toBe(false)
+      
+      // error is null case
+      expect(isErrorResponse({
+        success: false,
+        error: null,
+        meta: {
+          timestamp: '2025-06-07T05:51:00Z'
+        }
+      })).toBe(false)
+      
+      // error.code is not string
+      expect(isErrorResponse({
+        success: false,
+        error: {
+          code: 123,
+          message: 'エラーメッセージ'
+        },
+        meta: {
+          timestamp: '2025-06-07T05:51:00Z'
+        }
+      })).toBe(false)
+      
+      // error.message is not string
+      expect(isErrorResponse({
+        success: false,
+        error: {
+          code: 'ERROR_CODE',
+          message: null
+        },
+        meta: {
+          timestamp: '2025-06-07T05:51:00Z'
+        }
+      })).toBe(false)
+      
+      // meta is null case
+      expect(isErrorResponse({
+        success: false,
+        error: {
+          code: 'ERROR_CODE',
+          message: 'エラーメッセージ'
+        },
+        meta: null
+      })).toBe(false)
     })
   })
 
