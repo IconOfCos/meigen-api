@@ -66,15 +66,19 @@ export interface QuoteSearchOptions {
  * @param obj - 判定対象のオブジェクト
  * @returns Quote型の場合true、それ以外false
  */
-export function isQuote(obj: any): obj is Quote {
+export function isQuote(obj: unknown): obj is Quote {
+  if (typeof obj !== 'object' || obj === null) {
+    return false;
+  }
+  
+  const quote = obj as Record<string, unknown>;
+  
   return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof obj.id === 'number' &&
-    typeof obj.text === 'string' &&
-    typeof obj.author === 'string' &&
-    typeof obj.category === 'string' &&
-    typeof obj.createdAt === 'string' &&
-    (obj.tags === undefined || Array.isArray(obj.tags))
+    typeof quote.id === 'number' &&
+    typeof quote.text === 'string' &&
+    typeof quote.author === 'string' &&
+    typeof quote.category === 'string' &&
+    typeof quote.createdAt === 'string' &&
+    (quote.tags === undefined || Array.isArray(quote.tags))
   );
 }

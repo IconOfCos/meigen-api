@@ -25,7 +25,7 @@ export interface ValidationResult {
 export class ValidationError extends Error {
   constructor(
     public readonly field: string,
-    public readonly value: any,
+    public readonly value: unknown,
     public readonly reason: string
   ) {
     super(`Validation failed for field '${field}': ${reason}`);
@@ -66,7 +66,7 @@ const ALLOWED_CATEGORIES = ['人生', '成功', '愛', '友情', '勇気'] as co
  * @returns Quote バリデーション済みのQuoteオブジェクト
  * @throws ValidationError バリデーションに失敗した場合
  */
-export function validateQuote(data: any): Quote {
+export function validateQuote(data: unknown): Quote {
   const errors: ValidationError[] = [];
 
   // null/undefined チェック
@@ -79,55 +79,58 @@ export function validateQuote(data: any): Quote {
     throw new ValidationError('quote', data, 'Quote must be an object');
   }
 
+  // プロパティアクセスのために型をキャスト
+  const obj = data as Record<string, unknown>;
+
   // ID検証
-  if (typeof data.id !== 'number') {
-    errors.push(new ValidationError('id', data.id, 'ID must be a number'));
-  } else if (!Number.isInteger(data.id) || data.id <= 0) {
-    errors.push(new ValidationError('id', data.id, 'ID must be a positive integer'));
+  if (typeof obj.id !== 'number') {
+    errors.push(new ValidationError('id', obj.id, 'ID must be a number'));
+  } else if (!Number.isInteger(obj.id) || obj.id <= 0) {
+    errors.push(new ValidationError('id', obj.id, 'ID must be a positive integer'));
   }
 
   // テキスト検証
-  if (typeof data.text !== 'string') {
-    errors.push(new ValidationError('text', data.text, 'Text must be a string'));
-  } else if (data.text.trim().length === 0) {
-    errors.push(new ValidationError('text', data.text, 'Text cannot be empty'));
-  } else if (!containsJapaneseCharacters(data.text)) {
-    errors.push(new ValidationError('text', data.text, 'Text must contain Japanese characters'));
+  if (typeof obj.text !== 'string') {
+    errors.push(new ValidationError('text', obj.text, 'Text must be a string'));
+  } else if (obj.text.trim().length === 0) {
+    errors.push(new ValidationError('text', obj.text, 'Text cannot be empty'));
+  } else if (!containsJapaneseCharacters(obj.text)) {
+    errors.push(new ValidationError('text', obj.text, 'Text must contain Japanese characters'));
   }
 
   // 作者検証
-  if (typeof data.author !== 'string') {
-    errors.push(new ValidationError('author', data.author, 'Author must be a string'));
-  } else if (data.author.trim().length === 0) {
-    errors.push(new ValidationError('author', data.author, 'Author cannot be empty'));
+  if (typeof obj.author !== 'string') {
+    errors.push(new ValidationError('author', obj.author, 'Author must be a string'));
+  } else if (obj.author.trim().length === 0) {
+    errors.push(new ValidationError('author', obj.author, 'Author cannot be empty'));
   }
 
   // カテゴリ検証
-  if (typeof data.category !== 'string') {
-    errors.push(new ValidationError('category', data.category, 'Category must be a string'));
-  } else if (!ALLOWED_CATEGORIES.includes(data.category as any)) {
+  if (typeof obj.category !== 'string') {
+    errors.push(new ValidationError('category', obj.category, 'Category must be a string'));
+  } else if (!(ALLOWED_CATEGORIES as readonly string[]).includes(obj.category)) {
     errors.push(new ValidationError(
       'category', 
-      data.category, 
+      obj.category, 
       `Category must be one of: ${ALLOWED_CATEGORIES.join(', ')}`
     ));
   }
 
   // 作成日時検証
-  if (typeof data.createdAt !== 'string') {
-    errors.push(new ValidationError('createdAt', data.createdAt, 'CreatedAt must be a string'));
-  } else if (!isValidISO8601(data.createdAt)) {
-    errors.push(new ValidationError('createdAt', data.createdAt, 'CreatedAt must be valid ISO 8601 format'));
+  if (typeof obj.createdAt !== 'string') {
+    errors.push(new ValidationError('createdAt', obj.createdAt, 'CreatedAt must be a string'));
+  } else if (!isValidISO8601(obj.createdAt)) {
+    errors.push(new ValidationError('createdAt', obj.createdAt, 'CreatedAt must be valid ISO 8601 format'));
   }
 
   // タグ検証（オプショナル）
-  if (data.tags !== undefined) {
-    if (!Array.isArray(data.tags)) {
-      errors.push(new ValidationError('tags', data.tags, 'Tags must be an array if provided'));
+  if (obj.tags !== undefined) {
+    if (!Array.isArray(obj.tags)) {
+      errors.push(new ValidationError('tags', obj.tags, 'Tags must be an array if provided'));
     } else {
-      for (let i = 0; i < data.tags.length; i++) {
-        if (typeof data.tags[i] !== 'string') {
-          errors.push(new ValidationError(`tags[${i}]`, data.tags[i], 'Each tag must be a string'));
+      for (let i = 0; i < obj.tags.length; i++) {
+        if (typeof obj.tags[i] !== 'string') {
+          errors.push(new ValidationError(`tags[${i}]`, obj.tags[i], 'Each tag must be a string'));
         }
       }
     }
@@ -147,7 +150,7 @@ export function validateQuote(data: any): Quote {
  * @returns Quote[] バリデーション済みのQuote配列
  * @throws ValidationError バリデーションに失敗した場合
  */
-export function validateQuotes(data: any): Quote[] {
+export function validateQuotes(data: unknown): Quote[] {
   // 配列チェック
   if (!Array.isArray(data)) {
     throw new ValidationError('quotes', data, 'Data must be an array');
@@ -274,7 +277,7 @@ function isValidISO8601(dateString: string): boolean {
  * @returns ValidationResult バリデーション結果
  * @deprecated 後方互換性のために提供。新しいコードではvalidateQuote()を使用してください
  */
-export function validateQuoteWithResult(data: any): ValidationResult {
+export function validateQuoteWithResult(data: unknown): ValidationResult {
   try {
     const validatedQuote = validateQuote(data);
     return {
@@ -304,7 +307,7 @@ export function validateQuoteWithResult(data: any): ValidationResult {
  * @returns ValidationResult バリデーション結果
  * @deprecated 後方互換性のために提供。新しいコードではvalidateQuotes()を使用してください
  */
-export function validateQuotesWithResult(data: any): ValidationResult {
+export function validateQuotesWithResult(data: unknown): ValidationResult {
   try {
     const validatedQuotes = validateQuotes(data);
     return {

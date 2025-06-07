@@ -13,7 +13,7 @@ export interface MockQuoteData {
   /** モック名言データ */
   quotes: Quote[];
   /** テスト用の無効なデータ */
-  invalidQuotes: any[];
+  invalidQuotes: unknown[];
 }
 
 /**
@@ -27,8 +27,8 @@ export interface TestQuoteData {
     /** 必須フィールドが欠けているデータ */
     missingRequired: Partial<Quote>;
     /** 型が間違っているデータ */
-    wrongType: any;
+    wrongType: Record<string, unknown>;
     /** 空のデータ */
-    empty: {};
+    empty: Record<string, never>;
   };
 }

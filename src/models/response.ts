@@ -35,7 +35,7 @@ export interface ErrorResponse {
     /** エラーメッセージ */
     message: string;
     /** エラーの詳細情報（オプショナル） */
-    details?: any;
+    details?: unknown;
   };
   /** レスポンスのメタデータ */
   meta: {
@@ -76,15 +76,19 @@ export interface PaginatedResponse<T> {
  * @param obj - 判定対象のオブジェクト
  * @returns APIResponse型の場合true、それ以外false
  */
-export function isAPIResponse<T>(obj: any): obj is APIResponse<T> {
+export function isAPIResponse<T>(obj: unknown): obj is APIResponse<T> {
+  if (typeof obj !== 'object' || obj === null) {
+    return false;
+  }
+  
+  const response = obj as Record<string, unknown>;
+  
   return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof obj.success === 'boolean' &&
-    obj.data !== undefined &&
-    typeof obj.meta === 'object' &&
-    obj.meta !== null &&
-    typeof obj.meta.timestamp === 'string'
+    typeof response.success === 'boolean' &&
+    response.data !== undefined &&
+    typeof response.meta === 'object' &&
+    response.meta !== null &&
+    typeof (response.meta as Record<string, unknown>).timestamp === 'string'
   );
 }
 
@@ -93,17 +97,21 @@ export function isAPIResponse<T>(obj: any): obj is APIResponse<T> {
  * @param obj - 判定対象のオブジェクト
  * @returns ErrorResponse型の場合true、それ以外false
  */
-export function isErrorResponse(obj: any): obj is ErrorResponse {
+export function isErrorResponse(obj: unknown): obj is ErrorResponse {
+  if (typeof obj !== 'object' || obj === null) {
+    return false;
+  }
+  
+  const response = obj as Record<string, unknown>;
+  
   return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    obj.success === false &&
-    typeof obj.error === 'object' &&
-    obj.error !== null &&
-    typeof obj.error.code === 'string' &&
-    typeof obj.error.message === 'string' &&
-    typeof obj.meta === 'object' &&
-    obj.meta !== null &&
-    typeof obj.meta.timestamp === 'string'
+    response.success === false &&
+    typeof response.error === 'object' &&
+    response.error !== null &&
+    typeof (response.error as Record<string, unknown>).code === 'string' &&
+    typeof (response.error as Record<string, unknown>).message === 'string' &&
+    typeof response.meta === 'object' &&
+    response.meta !== null &&
+    typeof (response.meta as Record<string, unknown>).timestamp === 'string'
   );
 }

@@ -47,10 +47,10 @@ quotes.get('/random', async (c) => {
 // GET /quotes/:id - 特定のIDの名言を取得
 quotes.get('/:id', async (c) => {
   const idParam = c.req.param('id');
-  const id = parseInt(idParam);
+  const id = Number.parseInt(idParam);
   
   // IDパラメータのバリデーション
-  if (isNaN(id) || id <= 0) {
+  if (Number.isNaN(id) || id <= 0) {
     return c.json<ErrorResponse>({
       success: false,
       error: {
@@ -102,8 +102,8 @@ quotes.get('/:id', async (c) => {
 
 // GET /quotes - 全ての名言を取得（ページネーション対応）
 quotes.get('/', async (c) => {
-  const limit = parseInt(c.req.query('limit') || '10');
-  const offset = parseInt(c.req.query('offset') || '0');
+  const limit = Number.parseInt(c.req.query('limit') || '10');
+  const offset = Number.parseInt(c.req.query('offset') || '0');
   
   try {
     const allQuotes = await quoteService.getAllQuotes();

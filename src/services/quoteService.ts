@@ -34,7 +34,7 @@ export class QuoteServiceError extends Error {
  */
 export class QuoteService {
   private quotes: Quote[] = [];
-  private isInitialized: boolean = false;
+  private isInitialized = false;
 
   /**
    * サービスを初期化し、データを読み込む

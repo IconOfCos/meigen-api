@@ -5,8 +5,8 @@
  * およびエラーハンドリングを含む堅牢なデータアクセス基盤を提供します。
  */
 
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import type { Quote } from '../models/quote.js';
 import { validateQuotes, validateQuote, checkDataIntegrity, ValidationError, validateQuotesWithResult, validateQuoteWithResult, type ValidationResult, type DataIntegrityReport } from './validation.js';
 

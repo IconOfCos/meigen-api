@@ -1,15 +1,19 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import quotes from "./routes/index.js";
+import { corsMiddleware, errorHandler } from "./middleware/index.js";
 
 // モジュールのインポート - 実装時に有効化
 // import * as services from "./services/index.js";
 // import * as models from "./models/index.js";
 // import * as utils from "./utils/index.js";
 // import * as data from "./data/index.js";
-// import * as middleware from "./middleware/index.js";
 
 const app = new Hono();
+
+// ミドルウェアを適用
+app.use('*', corsMiddleware);
+app.use('*', errorHandler);
 
 // 基本ルート
 app.get("/", (c) => {
