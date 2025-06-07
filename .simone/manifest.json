@@ -37,10 +37,40 @@
     "completed": [],
     "upcoming": []
   },
+  "sprints": {
+    "current": null,
+    "highest_sprint_in_milestone": "S04_M001_Quality_Assurance",
+    "summary": {
+      "S01_M001_TDD_Foundation": {
+        "status": "planned",
+        "focus": "TDD開発環境の基盤構築",
+        "estimated_effort": "3-4日",
+        "dependencies": []
+      },
+      "S02_M001_Data_Core": {
+        "status": "planned", 
+        "focus": "名言データ管理とコアサービス",
+        "estimated_effort": "2-3日",
+        "dependencies": ["S01_M001_TDD_Foundation"]
+      },
+      "S03_M001_API_Implementation": {
+        "status": "planned",
+        "focus": "5つのAPIエンドポイント実装", 
+        "estimated_effort": "4-5日",
+        "dependencies": ["S02_M001_Data_Core"]
+      },
+      "S04_M001_Quality_Assurance": {
+        "status": "planned",
+        "focus": "エラーハンドリング、テスト、品質保証",
+        "estimated_effort": "3-4日", 
+        "dependencies": ["S03_M001_API_Implementation"]
+      }
+    }
+  },
   "status": {
     "phase": "development",
     "health": "green",
-    "lastUpdated": "2025-01-07T00:00:00Z"
+    "lastUpdated": "2025-01-07T04:30:00Z"
   },
   "requirements": {
     "core": [
